@@ -3,6 +3,15 @@
 Aturan: setiap perubahan ditulis di sini (terbaru di atas): tanggal, apa yang berubah, dan alasannya.
 Setiap kali tampilan template berubah, naikkan `TEMPLATE_VERSION` di `worksheet_engine/config.py`.
 
+## [1.3] - 2026-10-13
+### Ditambahkan
+- Template I (Diagonal Lines / Garis Miring): 4 panel (2x2), garis miring naik dan turun dari objek ke pasangannya (titik besar, putus-putus, jalur, gambar sendiri). Opsional.
+### Diubah
+- Mesin garis dipisah menjadi bagian bersama untuk H dan I: `trace_line_xy`, `start_finish`, `hint_with_arrows` (garis boleh dengan sudut apa pun).
+- Panah di teks petunjuk template H kini digambar (bukan karakter font), agar aman memakai font apa pun. Hanya area kecil petunjuk itu yang berubah; baris garis H identik.
+### Diuji
+- Template A-E identik dengan baseline.
+
 ## [1.2] - 2026-10-13
 ### Ditambahkan
 - Template H (Horizontal Lines / Garis Datar): latihan pra-menulis, menelusuri 5 garis datar dari kiri ke kanan (titik besar, putus-putus, titik kecil, jalur, gambar sendiri), dari objek ke pasangannya. Opsional, tidak masuk set bawaan.

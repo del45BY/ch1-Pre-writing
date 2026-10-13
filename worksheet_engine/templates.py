@@ -2,7 +2,9 @@
 Worksheet templates. Each template = metadata (text with {PLACEHOLDERS}) + a layout function.
 Add a new template: write a function draw_x(c, row, pool, rng, accent) and register it in TEMPLATES.
 """
+import math
 from reportlab.lib.colors import white
+from reportlab.pdfbase.pdfmetrics import stringWidth
 from .art import draw_object
 from .components import (arrow, dot, dotted_text, instruction, panel, scissors_line, star,
                          text_fit, tracing_line, word_pair)
@@ -225,69 +227,136 @@ def draw_g(c, row, pool, rng, accent):
                   "Hitung {RELATION_ID_LOWER}. Lingkari angkanya.")
 
 
-# ================================================================== TEMPLATE H  Horizontal Lines (pre-writing)
-def _dotted(c, x1, x2, y, width, gap_target):
-    """Round dots spaced evenly so the last dot lands exactly on x2."""
-    n = max(2, int((x2 - x1) / gap_target))
-    period = (x2 - x1) / n
+# ================================================================== shared tracing engine (used by H and I)
+def _dotted(c, x1, y1, x2, y2, width, gap_target):
+    """Round dots spaced evenly so the last dot lands exactly on the end point (works at ANY angle)."""
+    length = math.hypot(x2 - x1, y2 - y1)
+    n = max(2, int(length / gap_target))
+    period = length / n
     c.setLineCap(1); c.setLineWidth(width); c.setDash(0.1, period - 0.1)
-    c.line(x1, y, x2, y)
+    c.line(x1, y1, x2, y2)
 
 
-def trace_line(c, style, x1, x2, y, accent):
-    """Five difficulty levels of one horizontal line, easiest to hardest."""
+def trace_line_xy(c, style, p1, p2, accent, inset=4):
+    """One tracing line from p1=(x,y) to p2=(x,y). Horizontal (H) and diagonal (I) both use this.
+    style 0 big dots | 1 dashes | 2 small dots | 3 road (stay inside band) | 4 nothing (free draw)"""
+    (x1, y1), (x2, y2) = p1, p2
+    length = math.hypot(x2 - x1, y2 - y1)
+    ux, uy = (x2 - x1) / length, (y2 - y1) / length          # direction of the line
+    x1, y1, x2, y2 = x1 + ux * inset, y1 + uy * inset, x2 - ux * inset, y2 - uy * inset
     c.saveState()
     c.setStrokeColor(hx(PALETTE["grey"]))
-    if style == 0:                      # big dots
-        _dotted(c, x1, x2, y, 8, 17)
-    elif style == 1:                    # dashes
-        c.setLineCap(1); c.setLineWidth(6); c.setDash(26, 14); c.line(x1, y, x2, y)
-    elif style == 2:                    # small dots
-        _dotted(c, x1, x2, y, 4.5, 10)
-    elif style == 3:                    # road: pencil must stay inside the pale band
+    if style == 0:
+        _dotted(c, x1, y1, x2, y2, 8, 17)
+    elif style == 1:
+        c.setLineCap(1); c.setLineWidth(6); c.setDash(26, 14); c.line(x1, y1, x2, y2)
+    elif style == 2:
+        _dotted(c, x1, y1, x2, y2, 4.5, 10)
+    elif style == 3:
         c.setStrokeColor(hx(PALETTE[accent])); c.setStrokeAlpha(0.22)
-        c.setLineCap(1); c.setLineWidth(26); c.line(x1, y, x2, y)
+        c.setLineCap(1); c.setLineWidth(26); c.line(x1, y1, x2, y2)
         c.setStrokeAlpha(1); c.setStrokeColor(hx(PALETTE["line"]))
-        c.setLineWidth(2); c.setDash(8, 8); c.line(x1, y, x2, y)
-    # style 4: no guide at all -> child draws the line alone
+        c.setLineWidth(2); c.setDash(8, 8); c.line(x1, y1, x2, y2)
     c.restoreState()
 
 
+def start_finish(c, p1, p2):
+    """Green 'play' circle at the start, red 'stop' circle at the end.
+    The play triangle always points right: every line in H and I runs left -> right."""
+    for (x, y), col, kind in ((p1, PALETTE["mint"], "go"), (p2, PALETTE["coral"], "stop")):
+        c.setFillColor(hx(col)); c.setStrokeColor(white); c.setLineWidth(2)
+        c.circle(x, y, 11, stroke=1, fill=1)
+        c.setFillColor(white)
+        if kind == "go":
+            pth = c.beginPath(); pth.moveTo(x - 3, y + 5); pth.lineTo(x - 3, y - 5); pth.lineTo(x + 5, y)
+            pth.close(); c.drawPath(pth, stroke=0, fill=1)
+        else:
+            c.rect(x - 4.5, y - 4.5, 9, 9, stroke=0, fill=1)
+
+
+def hint_with_arrows(c, y, text, angles):
+    """Grey hint text followed by small DRAWN arrows (not font glyphs, so any font works)."""
+    c.setFont(FONT_BOLD, 12); c.setFillColor(hx(PALETTE["grey"]))
+    c.drawString(MARGIN + 4, y, text)
+    x = MARGIN + 4 + stringWidth(text, FONT_BOLD, 12) + 16
+    for a in angles:
+        c.saveState(); c.translate(x, y + 4); c.rotate(a)
+        c.setStrokeColor(hx(PALETTE["grey"])); c.setFillColor(hx(PALETTE["grey"]))
+        c.setLineWidth(2.2); c.setLineCap(1)
+        c.line(-10, 0, 6, 0)
+        pth = c.beginPath(); pth.moveTo(12, 0); pth.lineTo(5, 5); pth.lineTo(5, -5); pth.close()
+        c.drawPath(pth, stroke=0, fill=1)
+        c.restoreState()
+        x += 34
+
+
+# ================================================================== TEMPLATE H  Horizontal Lines (pre-writing)
 def draw_h(c, row, pool, rng, accent):
     y = instruction(c, row, CONTENT_TOP, "Trace the lines from {OBJECT_EN_LOWER} to {RELATION_EN_LOWER}.",
                     "Telusuri garis dari {OBJECT_ID_LOWER} ke {RELATION_ID_LOWER}.", accent, "H")
-    c.setFont(FONT_BOLD, 12); c.setFillColor(hx(PALETTE["grey"]))
-    c.drawString(MARGIN + 4, y - 18, "Left to right  /  Dari kiri ke kanan  \u2192")
+    hint_with_arrows(c, y - 18, "Left to right  /  Dari kiri ke kanan", [0])
     rh, gap = 88, 8
     top = y - 26
-    for i in range(5):
+    for i in range(5):                         # 5 stacked rows, full width
         yy = top - rh
-        cy = yy + rh / 2 + 6
+        cy = yy + rh / 2 + 6                   # ONE height for both ends -> the line is flat
         panel(c, MARGIN, yy, CONTENT_W, rh, fill=white, stroke=PALETTE["line"], lw=1.6, r=16)
         for en, id_, cx in ((row.obj_en, row.obj_id, MARGIN + 62), (row.rel_en, row.rel_id, PAGE_W - MARGIN - 62)):
             draw_object(c, en, cx, yy + 58, 52, "color")
             text_fit(c, cx, yy + 21, en, FONT_BOLD, 11.5, 100, PALETTE["ink"], "center")
             text_fit(c, cx, yy + 8, id_, FONT_REG, 9.5, 100, PALETTE[accent], "center")
-        x1, x2 = MARGIN + 128, PAGE_W - MARGIN - 128
-        trace_line(c, i, x1 + 4, x2 - 4, cy, accent)
-        # start (green circle + play) and finish (red circle + stop)
-        for x, col, kind in ((x1, PALETTE["mint"], "go"), (x2, PALETTE["coral"], "stop")):
-            c.setFillColor(hx(col)); c.setStrokeColor(white); c.setLineWidth(2)
-            c.circle(x, cy, 11, stroke=1, fill=1)
-            c.setFillColor(white)
-            if kind == "go":
-                pth = c.beginPath(); pth.moveTo(x - 3, cy + 5); pth.lineTo(x - 3, cy - 5); pth.lineTo(x + 5, cy); pth.close()
-                c.drawPath(pth, stroke=0, fill=1)
-            else:
-                c.rect(x - 4.5, cy - 4.5, 9, 9, stroke=0, fill=1)
+        p1, p2 = (MARGIN + 128, cy), (PAGE_W - MARGIN - 128, cy)    # same y  => horizontal
+        trace_line_xy(c, i, p1, p2, accent)
+        start_finish(c, p1, p2)
         if i == 0:
             c.setFont(FONT_REG, 8.5); c.setFillColor(hx(PALETTE["grey"]))
-            c.drawCentredString(x1, cy + 20, "Start / Mulai")
-            c.drawCentredString(x2, cy + 20, "Finish / Selesai")
+            c.drawCentredString(p1[0], cy + 20, "Start / Mulai")
+            c.drawCentredString(p2[0], cy + 20, "Finish / Selesai")
         if i == 4:
             c.setFont(FONT_BOLD, 10); c.setFillColor(hx(PALETTE[accent]))
-            c.drawCentredString((x1 + x2) / 2, cy + 20, "Draw it yourself! / Gambar sendiri!")
+            c.drawCentredString((p1[0] + p2[0]) / 2, cy + 20, "Draw it yourself! / Gambar sendiri!")
         top = yy - gap
+
+
+# ================================================================== TEMPLATE I  Diagonal Lines (pre-writing)
+def diag_panel(c, row, x, yb, w, h, up, style, accent, first=False):
+    """One square-ish panel: partner picture in the opposite corner, one slanted line between them.
+    up=True : main object bottom-left  -> partner top-right   (line goes UP)
+    up=False: main object top-left     -> partner bottom-right (line goes DOWN)"""
+    panel(c, x, yb, w, h, fill=white, stroke=PALETTE["line"], lw=1.6, r=16)
+    y_hi, y_lo = yb + h - 34, yb + 62          # TWO different heights -> the line is slanted
+    ay, by = (y_lo, y_hi) if up else (y_hi, y_lo)
+    ax, bx = x + 38, x + w - 38
+    for en, id_, cx, cy in ((row.obj_en, row.obj_id, ax, ay), (row.rel_en, row.rel_id, bx, by)):
+        draw_object(c, en, cx, cy, 52, "color")
+        text_fit(c, cx, cy - 40, en, FONT_BOLD, 11, 78, PALETTE["ink"], "center")
+        text_fit(c, cx, cy - 52, id_, FONT_REG, 9, 78, PALETTE[accent], "center")
+    p1, p2 = (ax + 40, ay), (bx - 40, by)      # start next to the left picture, end next to the right
+    trace_line_xy(c, style, p1, p2, accent)
+    start_finish(c, p1, p2)
+    c.setFont(FONT_REG, 8.5); c.setFillColor(hx(PALETTE["grey"]))
+    if first:
+        c.drawString(p1[0] + 16, p1[1] - 4, "Start / Mulai")
+        c.drawRightString(p2[0] - 16, p2[1] - 4, "Finish / Selesai")
+    if style == 4:                             # free draw: write the hint in the empty corner
+        c.setFont(FONT_BOLD, 10); c.setFillColor(hx(PALETTE[accent]))
+        c.drawCentredString(x + w - 62, yb + h - 22, "Draw it yourself!")
+        c.drawCentredString(x + w - 62, yb + h - 35, "Gambar sendiri!")
+
+
+def draw_i(c, row, pool, rng, accent):
+    y = instruction(c, row, CONTENT_TOP, "Trace the slanted lines from {OBJECT_EN_LOWER} to {RELATION_EN_LOWER}.",
+                    "Telusuri garis miring dari {OBJECT_ID_LOWER} ke {RELATION_ID_LOWER}.", accent, "I")
+    hint_with_arrows(c, y - 18, "Follow the slanted line  /  Ikuti garis miring", [35, -35])
+    gap = 8
+    pw, ph = (CONTENT_W - gap) / 2, 240        # 2 columns x 2 rows (H used 1 column x 5 rows)
+    plan = [(True, 0), (False, 1), (True, 3), (False, 4)]    # (goes up?, line style) easy -> hard
+    top = y - 26
+    for i, (up, style) in enumerate(plan):
+        r_, c_ = divmod(i, 2)
+        x = MARGIN + c_ * (pw + gap)
+        yb = top - (r_ + 1) * ph - r_ * gap
+        diag_panel(c, row, x, yb, pw, ph, up, style, accent, first=(i == 0))
 
 
 TEMPLATES = {
@@ -314,5 +383,8 @@ TEMPLATES = {
     "H": dict(name_en="Horizontal Lines", name_id="Garis Datar", accent="mint", fn=draw_h,
               objective_en="trace a straight line from {OBJECT_EN_LOWER} to {RELATION_EN_LOWER}.",
               objective_id="menelusuri garis lurus dari {OBJECT_ID_LOWER} ke {RELATION_ID_LOWER}."),
+    "I": dict(name_en="Diagonal Lines", name_id="Garis Miring", accent="grape", fn=draw_i,
+              objective_en="trace a slanted line from {OBJECT_EN_LOWER} to {RELATION_EN_LOWER}.",
+              objective_id="menelusuri garis miring dari {OBJECT_ID_LOWER} ke {RELATION_ID_LOWER}."),
 }
 DEFAULT_SET = ["A", "B", "C", "D", "E"]
