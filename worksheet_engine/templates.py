@@ -187,6 +187,44 @@ def draw_f(c, row, pool, rng, accent):
                   right_words=False)
 
 
+# ================================================================== TEMPLATE G  Counting (how many?)
+NUM_EN = ["one", "two", "three", "four", "five"]
+NUM_ID = ["satu", "dua", "tiga", "empat", "lima"]
+
+
+def count_section(c, row, y_top, item_en, count, accent, badge, en, id_):
+    """One block: instruction -> row of N pictures -> number choices 1..5 to circle."""
+    y = instruction(c, row, y_top, en, id_, accent, badge, h=50)
+    ph = 120
+    panel(c, MARGIN, y - 8 - ph, CONTENT_W, ph, fill=white, stroke=PALETTE["line"], lw=1.6, r=14)
+    step, size = 100, 92
+    x0 = PAGE_W / 2 - step * (count - 1) / 2
+    for i in range(count):
+        draw_object(c, item_en, x0 + i * step, y - 8 - ph / 2, size, "color")
+    top = y - 8 - ph - 10
+    cy = top - 24
+    cell = CONTENT_W / 5
+    for n in range(1, 6):
+        cx = MARGIN + cell * (n - 0.5)
+        c.setFillColor(white); c.setStrokeColor(hx(PALETTE[accent])); c.setLineWidth(3)
+        c.circle(cx, cy, 22, stroke=1, fill=1)
+        c.setFillColor(hx(PALETTE["ink"])); c.setFont(FONT_BOLD, 24)
+        c.drawCentredString(cx, cy - 8.5, str(n))
+        text_fit(c, cx, cy - 38, f"{NUM_EN[n - 1]} / {NUM_ID[n - 1]}", FONT_REG, 11, cell - 6, PALETTE["grey"], "center")
+    return cy - 46
+
+
+def draw_g(c, row, pool, rng, accent):
+    n1 = rng.randint(1, 5)
+    n2 = rng.choice([n for n in range(1, 6) if n != n1])   # different numbers on the two blocks
+    y = count_section(c, row, CONTENT_TOP, row.obj_en, n1, accent, "1",
+                      "Count the {OBJECT_EN_LOWER}. Circle the number.",
+                      "Hitung {OBJECT_ID_LOWER}. Lingkari angkanya.")
+    count_section(c, row, y - 10, row.rel_en, n2, accent, "2",
+                  "Count the {RELATION_EN_LOWER}. Circle the number.",
+                  "Hitung {RELATION_ID_LOWER}. Lingkari angkanya.")
+
+
 TEMPLATES = {
     "A": dict(name_en="Animal Matching", name_id="Menjodohkan", accent="coral", fn=draw_a,
               objective_en="match things that go together.", objective_id="menjodohkan hal yang berpasangan."),
@@ -205,5 +243,8 @@ TEMPLATES = {
     "F": dict(name_en="Shadow Matching", name_id="Menjodohkan Bayangan", accent="coral", fn=draw_f,
               objective_en="match each picture with its shadow.",
               objective_id="menjodohkan gambar dengan bayangannya."),
+    "G": dict(name_en="Counting", name_id="Berhitung", accent="sky", fn=draw_g,
+              objective_en="count {OBJECT_EN_LOWER} and {RELATION_EN_LOWER} from 1 to 5.",
+              objective_id="menghitung {OBJECT_ID_LOWER} dan {RELATION_ID_LOWER} dari 1 sampai 5."),
 }
 DEFAULT_SET = ["A", "B", "C", "D", "E"]

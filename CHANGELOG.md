@@ -3,6 +3,13 @@
 Aturan: setiap perubahan ditulis di sini (terbaru di atas): tanggal, apa yang berubah, dan alasannya.
 Setiap kali tampilan template berubah, naikkan `TEMPLATE_VERSION` di `worksheet_engine/config.py`.
 
+## [1.1] - 2026-10-13
+### Ditambahkan
+- Template G (Counting / Berhitung): hitung 1-5 gambar dan lingkari angkanya (kata angka EN/ID). Opsional, tidak masuk set bawaan.
+- `PANDUAN_TAMBAH_TEMPLATE.md`: panduan menambah template baru.
+### Diuji
+- Template A-E untuk baris 001 identik piksel-demi-piksel dengan `samples/baseline_chicken_egg_preview.png`.
+
 ## [1.0] - 2026-10-13
 ### Ditambahkan
 - Mesin lembar kerja dwibahasa (Inggris-Indonesia) untuk usia 3-5 tahun.

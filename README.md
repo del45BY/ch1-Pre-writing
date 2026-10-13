@@ -54,8 +54,9 @@ python -m worksheet_engine.main --db data/worksheet_database.xlsx --out PRODUCTS
 | D | Cut and Paste | cut 3 pictures, paste each next to its partner | 3 target rows with dashed paste boxes, scissors line, cut-out strip |
 | E | Coloring | colour the chicken and the egg | 2 large outline panels |
 | F (optional) | Shadow Matching | match picture to its silhouette | same engine as A |
+| G (optional) | Counting | count 1-5 pictures, circle the number (EN/ID number words) | 2 blocks: picture row + number choices |
 
-Default product = A-E (5 pages). Use `--templates A,B,C,D,E,F` or the `Templates` column for per-row overrides.
+Default product = A-E (5 pages). Use `--templates A,B,C,D,E,F,G` or the `Templates` column for per-row overrides.
 
 ---------------------------------------------------------------------
 ## 2. Database mapping rules
@@ -167,6 +168,9 @@ PRODUCTS/
     Tree/              (same files)
   qc_report.csv  manifest.csv  image_prompts.csv
 ```
+
+## Adding a template
+See `PANDUAN_TAMBAH_TEMPLATE.md` (Indonesian, step by step, with the Counting template as the worked example).
 
 ## Notes / next steps
 * The built-in vector art covers the 10 sample words so the system runs offline. For the full catalogue, generate PNGs from
