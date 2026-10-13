@@ -1,0 +1,16 @@
+# Hasil yang bisa dibuat ulang kapan saja
+PRODUCTS/
+.cache/
+.build_hash
+_cover.pdf
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# File sementara Excel / sistem
+~$*.xlsx
+.DS_Store
+Thumbs.db
