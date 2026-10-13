@@ -3,6 +3,12 @@
 Aturan: setiap perubahan ditulis di sini (terbaru di atas): tanggal, apa yang berubah, dan alasannya.
 Setiap kali tampilan template berubah, naikkan `TEMPLATE_VERSION` di `worksheet_engine/config.py`.
 
+## [1.2] - 2026-10-13
+### Ditambahkan
+- Template H (Horizontal Lines / Garis Datar): latihan pra-menulis, menelusuri 5 garis datar dari kiri ke kanan (titik besar, putus-putus, titik kecil, jalur, gambar sendiri), dari objek ke pasangannya. Opsional, tidak masuk set bawaan.
+### Diuji
+- Template A-E baris 001 tetap identik dengan baseline.
+
 ## [1.1] - 2026-10-13
 ### Ditambahkan
 - Template G (Counting / Berhitung): hitung 1-5 gambar dan lingkari angkanya (kata angka EN/ID). Opsional, tidak masuk set bawaan.

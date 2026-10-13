@@ -225,6 +225,71 @@ def draw_g(c, row, pool, rng, accent):
                   "Hitung {RELATION_ID_LOWER}. Lingkari angkanya.")
 
 
+# ================================================================== TEMPLATE H  Horizontal Lines (pre-writing)
+def _dotted(c, x1, x2, y, width, gap_target):
+    """Round dots spaced evenly so the last dot lands exactly on x2."""
+    n = max(2, int((x2 - x1) / gap_target))
+    period = (x2 - x1) / n
+    c.setLineCap(1); c.setLineWidth(width); c.setDash(0.1, period - 0.1)
+    c.line(x1, y, x2, y)
+
+
+def trace_line(c, style, x1, x2, y, accent):
+    """Five difficulty levels of one horizontal line, easiest to hardest."""
+    c.saveState()
+    c.setStrokeColor(hx(PALETTE["grey"]))
+    if style == 0:                      # big dots
+        _dotted(c, x1, x2, y, 8, 17)
+    elif style == 1:                    # dashes
+        c.setLineCap(1); c.setLineWidth(6); c.setDash(26, 14); c.line(x1, y, x2, y)
+    elif style == 2:                    # small dots
+        _dotted(c, x1, x2, y, 4.5, 10)
+    elif style == 3:                    # road: pencil must stay inside the pale band
+        c.setStrokeColor(hx(PALETTE[accent])); c.setStrokeAlpha(0.22)
+        c.setLineCap(1); c.setLineWidth(26); c.line(x1, y, x2, y)
+        c.setStrokeAlpha(1); c.setStrokeColor(hx(PALETTE["line"]))
+        c.setLineWidth(2); c.setDash(8, 8); c.line(x1, y, x2, y)
+    # style 4: no guide at all -> child draws the line alone
+    c.restoreState()
+
+
+def draw_h(c, row, pool, rng, accent):
+    y = instruction(c, row, CONTENT_TOP, "Trace the lines from {OBJECT_EN_LOWER} to {RELATION_EN_LOWER}.",
+                    "Telusuri garis dari {OBJECT_ID_LOWER} ke {RELATION_ID_LOWER}.", accent, "H")
+    c.setFont(FONT_BOLD, 12); c.setFillColor(hx(PALETTE["grey"]))
+    c.drawString(MARGIN + 4, y - 18, "Left to right  /  Dari kiri ke kanan  \u2192")
+    rh, gap = 88, 8
+    top = y - 26
+    for i in range(5):
+        yy = top - rh
+        cy = yy + rh / 2 + 6
+        panel(c, MARGIN, yy, CONTENT_W, rh, fill=white, stroke=PALETTE["line"], lw=1.6, r=16)
+        for en, id_, cx in ((row.obj_en, row.obj_id, MARGIN + 62), (row.rel_en, row.rel_id, PAGE_W - MARGIN - 62)):
+            draw_object(c, en, cx, yy + 58, 52, "color")
+            text_fit(c, cx, yy + 21, en, FONT_BOLD, 11.5, 100, PALETTE["ink"], "center")
+            text_fit(c, cx, yy + 8, id_, FONT_REG, 9.5, 100, PALETTE[accent], "center")
+        x1, x2 = MARGIN + 128, PAGE_W - MARGIN - 128
+        trace_line(c, i, x1 + 4, x2 - 4, cy, accent)
+        # start (green circle + play) and finish (red circle + stop)
+        for x, col, kind in ((x1, PALETTE["mint"], "go"), (x2, PALETTE["coral"], "stop")):
+            c.setFillColor(hx(col)); c.setStrokeColor(white); c.setLineWidth(2)
+            c.circle(x, cy, 11, stroke=1, fill=1)
+            c.setFillColor(white)
+            if kind == "go":
+                pth = c.beginPath(); pth.moveTo(x - 3, cy + 5); pth.lineTo(x - 3, cy - 5); pth.lineTo(x + 5, cy); pth.close()
+                c.drawPath(pth, stroke=0, fill=1)
+            else:
+                c.rect(x - 4.5, cy - 4.5, 9, 9, stroke=0, fill=1)
+        if i == 0:
+            c.setFont(FONT_REG, 8.5); c.setFillColor(hx(PALETTE["grey"]))
+            c.drawCentredString(x1, cy + 20, "Start / Mulai")
+            c.drawCentredString(x2, cy + 20, "Finish / Selesai")
+        if i == 4:
+            c.setFont(FONT_BOLD, 10); c.setFillColor(hx(PALETTE[accent]))
+            c.drawCentredString((x1 + x2) / 2, cy + 20, "Draw it yourself! / Gambar sendiri!")
+        top = yy - gap
+
+
 TEMPLATES = {
     "A": dict(name_en="Animal Matching", name_id="Menjodohkan", accent="coral", fn=draw_a,
               objective_en="match things that go together.", objective_id="menjodohkan hal yang berpasangan."),
@@ -246,5 +311,8 @@ TEMPLATES = {
     "G": dict(name_en="Counting", name_id="Berhitung", accent="sky", fn=draw_g,
               objective_en="count {OBJECT_EN_LOWER} and {RELATION_EN_LOWER} from 1 to 5.",
               objective_id="menghitung {OBJECT_ID_LOWER} dan {RELATION_ID_LOWER} dari 1 sampai 5."),
+    "H": dict(name_en="Horizontal Lines", name_id="Garis Datar", accent="mint", fn=draw_h,
+              objective_en="trace a straight line from {OBJECT_EN_LOWER} to {RELATION_EN_LOWER}.",
+              objective_id="menelusuri garis lurus dari {OBJECT_ID_LOWER} ke {RELATION_ID_LOWER}."),
 }
 DEFAULT_SET = ["A", "B", "C", "D", "E"]

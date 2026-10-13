@@ -55,8 +55,9 @@ python -m worksheet_engine.main --db data/worksheet_database.xlsx --out PRODUCTS
 | E | Coloring | colour the chicken and the egg | 2 large outline panels |
 | F (optional) | Shadow Matching | match picture to its silhouette | same engine as A |
 | G (optional) | Counting | count 1-5 pictures, circle the number (EN/ID number words) | 2 blocks: picture row + number choices |
+| H (optional) | Horizontal Lines | pre-writing: trace 5 horizontal lines left to right from the object to its partner (big dots, dashes, small dots, road, free draw) | 5 rows, start/finish markers |
 
-Default product = A-E (5 pages). Use `--templates A,B,C,D,E,F,G` or the `Templates` column for per-row overrides.
+Default product = A-E (5 pages). Use `--templates A,B,C,D,E,F,G,H` or the `Templates` column for per-row overrides.
 
 ---------------------------------------------------------------------
 ## 2. Database mapping rules
