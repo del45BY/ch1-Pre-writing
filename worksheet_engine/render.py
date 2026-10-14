@@ -9,6 +9,7 @@ from reportlab.lib.colors import white
 from reportlab.pdfgen import canvas
 from .art import ART_NAMES, ART_PAIRS, draw_object
 from .components import footer, header, panel, star, text_fit
+from .database import safe_name
 from .config import (BRAND, FONT_BOLD, FONT_REG, PAGE_H, PAGE_W, PALETTE, TEMPLATE_VERSION, TINT,
                      ASSETS, BRAND_STRIPE, hx)
 from .templates import DEFAULT_SET, TEMPLATES
@@ -38,13 +39,12 @@ def build_hash(row, templates):
 
 
 # ------------------------------------------------------------------ PDF
-def render_pdf(row, pool, templates, out_pdf):
+def _write_pdf(pages, pool, out_pdf, title, subject, keywords):
+    """pages = [(template_key, Row), ...]  -> each page may use a DIFFERENT row (bundle mode)."""
     c = canvas.Canvas(str(out_pdf), pagesize=(PAGE_W, PAGE_H))
-    c.setTitle(f"{row.obj_en} & {row.rel_en} - English / Indonesian Worksheet")
-    c.setAuthor(BRAND["name"]); c.setSubject(f"{row.obj_id} & {row.rel_id} - Lembar Kerja Dwibahasa")
-    c.setKeywords(f"{row.category}, preschool, bilingual, Indonesian, ages 3-5")
-    total = len(templates)
-    for n, key in enumerate(templates, 1):
+    c.setTitle(title); c.setAuthor(BRAND["name"]); c.setSubject(subject); c.setKeywords(keywords)
+    total = len(pages)
+    for n, (key, row) in enumerate(pages, 1):
         t = TEMPLATES[key]
         seed_key = key[1:] if key.startswith("L") else key  # template lama LA..LI memakai kunci acak lamanya (A..I)
         rng = random.Random(f"{row.id}-{seed_key}")        # deterministic layout per row/template
@@ -53,6 +53,13 @@ def render_pdf(row, pool, templates, out_pdf):
         footer(c, n, total, f"Activity {key}: {t['name_en']} / {t['name_id']}")
         c.showPage()
     c.save()
+
+
+def render_pdf(row, pool, templates, out_pdf):
+    _write_pdf([(k, row) for k in templates], pool, out_pdf,
+               f"{row.obj_en} & {row.rel_en} - English / Indonesian Worksheet",
+               f"{row.obj_id} & {row.rel_id} - Lembar Kerja Dwibahasa",
+               f"{row.category}, preschool, bilingual, Indonesian, ages 3-5")
 
 
 def pdf_to_images(pdf_path, scale):
@@ -132,3 +139,66 @@ def build_product(row, pool, out_root, templates=None, force=False):
     render_cover(row, templates, folder / "Cover.png", folder / "Thumbnail.png", folder / "_cover.pdf")
     stamp.write_text(h)
     return {"id": row.id, "folder": str(folder), "built": True, "pages": len(templates)}
+
+
+# ================================================================== BUNDLE: tiap halaman boleh memakai baris (hewan) berbeda
+def bundle_cover(name, pages, out_cover, out_thumb, tmp_pdf):
+    """Sampul paket: nama paket + gambar semua objek unik (maks 10)."""
+    S = 640
+    c = canvas.Canvas(str(tmp_pdf), pagesize=(S, S))
+    c.setFillColor(hx(TINT["sun"])); c.rect(0, 0, S, S, stroke=0, fill=1)
+    seg = S / len(BRAND_STRIPE)
+    for i, nm in enumerate(BRAND_STRIPE):
+        c.setFillColor(hx(PALETTE[nm])); c.rect(i * seg, S - 18, seg + 1, 18, stroke=0, fill=1)
+    panel(c, 30, 30, S - 60, S - 90, fill=white, stroke=PALETTE["ink"], lw=4, r=34)
+    title = name.replace("_", " ")
+    text_fit(c, S / 2, S - 126, title, FONT_BOLD, 46, S - 190, PALETTE["ink"], "center")
+    text_fit(c, S / 2, S - 160, "Pre-Writing Worksheet Pack  /  Paket Lembar Pra-Menulis", FONT_BOLD, 15, S - 120, PALETTE["coral"], "center")
+    items, seen = [], set()
+    for _, row in pages:
+        for en in (row.obj_en, row.rel_en):
+            if en.lower() not in seen:
+                seen.add(en.lower()); items.append(en)
+    items = items[:10]
+    per_row = 5 if len(items) > 5 else len(items)
+    size, gap = 84, 14
+    for r_ in range(-(-len(items) // per_row)):
+        chunk = items[r_ * per_row:(r_ + 1) * per_row]
+        x0 = S / 2 - (len(chunk) * size + (len(chunk) - 1) * gap) / 2
+        y = 372 - r_ * (size + gap + 8)
+        for i, en in enumerate(chunk):
+            x = x0 + i * (size + gap)
+            panel(c, x, y - size / 2 - 4, size, size + 8, fill=TINT[["sky", "mint", "coral", "grape", "sun"][(r_ * per_row + i) % 5]], r=18)
+            draw_object(c, en, x + size / 2, y, size - 10)
+    panel(c, 110, 120, S - 220, 58, fill=PALETTE["coral"], r=29)
+    c.setFillColor(white); c.setFont(FONT_BOLD, 22)
+    c.drawCentredString(S / 2, 156, f"{len(pages)} Printable Worksheets")
+    c.setFont(FONT_REG, 14); c.drawCentredString(S / 2, 133, f"{len(pages)} Lembar Kerja Siap Cetak")
+    c.setFillColor(hx(PALETTE["grey"])); c.setFont(FONT_BOLD, 15)
+    c.drawCentredString(S / 2, 92, "English \u2022 Bahasa Indonesia   |   Ages 3-5 \u2022 Usia 3-5")
+    c.setFont(FONT_REG, 11); c.drawCentredString(S / 2, 62, BRAND["name"])
+    star(c, 64, S - 78, 20, PALETTE["sun"]); star(c, S - 64, S - 78, 20, PALETTE["sun"])
+    c.save()
+    img = pdf_to_images(tmp_pdf, 2000 / S)[0]
+    img.save(out_cover, optimize=True)
+    img.resize((600, 600), Image.LANCZOS).save(out_thumb, optimize=True)
+    Path(tmp_pdf).unlink(missing_ok=True)
+
+
+def build_bundle(name, pages, pool, out_root, force=False):
+    """pages = [(template_key, Row), ...]. Output: <out>/Bundles/<name>/ (PDF, Preview, Cover, Thumbnail)."""
+    folder = Path(out_root) / "Bundles" / safe_name(name)
+    folder.mkdir(parents=True, exist_ok=True)
+    stamp, pdf = folder / ".build_hash", folder / PDF_NAME
+    img_state = [(q.name, q.stat().st_mtime) for q in sorted((ASSETS / "images").glob("*.png"))]
+    h = hashlib.sha1(json.dumps([name, [(k, r.__dict__) for k, r in pages], TEMPLATE_VERSION, str(img_state),
+                                 BRAND["name"]], default=str).encode()).hexdigest()
+    if not force and stamp.exists() and stamp.read_text() == h and pdf.exists():
+        return {"bundle": name, "folder": str(folder), "built": False, "pages": len(pages)}
+    cats = sorted({r.category for _, r in pages})
+    _write_pdf(pages, pool, pdf, f"{name.replace('_', ' ')} - English / Indonesian Worksheet Pack",
+               "Paket lembar kerja pra-menulis dwibahasa", f"{', '.join(cats)}, preschool, bilingual, Indonesian, ages 3-5")
+    render_preview(pdf, folder / "Preview.png")
+    bundle_cover(name, pages, folder / "Cover.png", folder / "Thumbnail.png", folder / "_cover.pdf")
+    stamp.write_text(h)
+    return {"bundle": name, "folder": str(folder), "built": True, "pages": len(pages)}

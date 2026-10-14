@@ -3,6 +3,14 @@
 Aturan: setiap perubahan ditulis di sini (terbaru di atas): tanggal, apa yang berubah, dan alasannya.
 Setiap kali tampilan template berubah, naikkan `TEMPLATE_VERSION` di `worksheet_engine/config.py`.
 
+## [2.1] - 2026-10-14
+### Ditambahkan
+- Mode bundle: satu PDF dengan tiap halaman memakai baris (hewan dan pasangan) berbeda. Opsi `--bundle`, `--ids`, `--pages`, `--bundles-sheet`; sheet Excel opsional `Bundles` (Bundle | Template | ID).
+- Keluaran `PRODUCTS/Bundles/<nama>/` (PDF, Preview, Cover dengan semua gambar paket, Thumbnail) dan `manifest_bundles.csv`.
+- `PANDUAN_BUNDLE.md`; contoh sheet Bundles di database bawaan.
+### Diuji
+- Produk tunggal v2.0 identik dengan baseline; kesalahan (ID/template salah, baris gagal QC) melewati paket dengan pesan jelas.
+
 ## [2.0] - 2026-10-14
 ### Diubah (BESAR)
 - Set template bawaan diganti menjadi 10 template pra-menulis: A Garis Tegak, B Garis Datar, C Garis Miring, D Garis Zigzag, E Garis Lengkung, F Garis Gelombang, G Lingkaran & Spiral, H Pola Campuran, I Mengikuti Jalur, J Menebalkan Bentuk Dasar.

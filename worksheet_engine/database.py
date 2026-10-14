@@ -97,3 +97,26 @@ def load_rows(path) -> list:
             countable=get("Countable"), templates=get("Templates"), status=get("Status"),
         ))
     return rows
+
+
+def load_bundles(path) -> dict:
+    """Optional sheet named 'Bundles' with columns: Bundle | Template | ID  (one line = one page).
+    Returns {bundle_name: [(template_key_or_empty, id), ...]} in sheet order."""
+    try:
+        df = pd.read_excel(path, dtype=str, sheet_name="Bundles").fillna("")
+    except ValueError:                       # sheet does not exist
+        return {}
+    cols = {_norm_header(c): c for c in df.columns}
+    for need in ("bundle", "id"):
+        if need not in cols:
+            raise ValueError("Sheet 'Bundles' needs columns: Bundle, Template (optional), ID")
+    out = {}
+    for _, r in df.iterrows():
+        name = str(r[cols["bundle"]]).strip()
+        rid = str(r[cols["id"]]).strip()
+        if not name or not rid:
+            continue
+        rid = rid.zfill(3) if rid.isdigit() else rid
+        tpl = str(r[cols["template"]]).strip().upper() if "template" in cols else ""
+        out.setdefault(name, []).append((tpl, rid))
+    return out

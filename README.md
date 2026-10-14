@@ -179,6 +179,16 @@ PRODUCTS/
   qc_report.csv  manifest.csv  image_prompts.csv
 ```
 
+## Bundles (every page a different animal)
+One PDF where each page uses a different row, e.g. A = Chicken & Egg, B = Bee & Honey, C = Cow & Milk.
+See `PANDUAN_BUNDLE.md` (Indonesian). Quick start:
+```
+python -m worksheet_engine.main --db data/worksheet_database.xlsx --out PRODUCTS --bundle Animal_Friends_Pack_1 --ids 001,002,003,004,005
+python -m worksheet_engine.main --db data/worksheet_database.xlsx --out PRODUCTS --bundle Mini_Pack --pages "A=002,C=004,J=005"
+python -m worksheet_engine.main --db data/worksheet_database.xlsx --out PRODUCTS --bundles-sheet     # sheet 'Bundles': Bundle | Template | ID
+```
+Output: `PRODUCTS/Bundles/<name>/` + `manifest_bundles.csv`.
+
 ## Adding a template
 See `PANDUAN_TAMBAH_TEMPLATE.md` (Indonesian, step by step, with the Counting template as the worked example).
 
