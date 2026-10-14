@@ -45,20 +45,26 @@ python -m worksheet_engine.main --db data/worksheet_database.xlsx --out PRODUCTS
 * Palette: coral `#FF7A6B`, sky `#4FB3E8`, sun `#FFC83D`, mint `#4CC9A0`, grape `#9B7BE0` + 12% tints. One accent colour per template, all share the same stripe/header/footer.
 * Type: Fredoka/Baloo if present in `assets/fonts/` (recommended), else DejaVu Sans Bold. Words 24-42 pt, instructions 13-18 pt.
 
-### Templates
-| Key | Name | What the child does | Layout |
+### Templates (v2.0: 10 pre-writing worksheets, all follow "from {OBJECT} to {RELATION}")
+| Key | Name (EN / ID) | What the child does | Layout |
 |---|---|---|---|
-| A | Animal Matching | draw lines between 3 pictures and their partners (target pair starred; 2 distractor pairs from other DB rows) | 2 columns x 3 cards, connection dots |
-| B | Vocabulary Learning | look, say, trace "This is a chicken. / Ini adalah ayam." | 2 large cards (object, related) with dotted tracing EN + ID |
-| C | Find and Circle | circle the egg (x2 in grid), then circle the chicken | 2 sections x 6 picture cells, no words (so it tests recognition) |
-| D | Cut and Paste | cut 3 pictures, paste each next to its partner | 3 target rows with dashed paste boxes, scissors line, cut-out strip |
-| E | Coloring | colour the chicken and the egg | 2 large outline panels |
-| F (optional) | Shadow Matching | match picture to its silhouette | same engine as A |
-| G (optional) | Counting | count 1-5 pictures, circle the number (EN/ID number words) | 2 blocks: picture row + number choices |
-| I (optional) | Diagonal Lines | pre-writing: trace 4 slanted lines (up / down) from the object to its partner (big dots, dashes, road, free draw) | 2x2 panels, partner in the opposite corner |
-| H (optional) | Horizontal Lines | pre-writing: trace 5 horizontal lines left to right from the object to its partner (big dots, dashes, small dots, road, free draw) | 5 rows, start/finish markers |
+| A | Vertical Lines / Garis Tegak | trace straight lines top to bottom | 4 tall columns (big dots, dashes, road, free draw) |
+| B | Horizontal Lines / Garis Datar | trace straight lines left to right | 5 rows, easy to hard |
+| C | Diagonal Lines / Garis Miring | trace slanted lines (up and down) | 2x2 panels, partner in the opposite corner |
+| D | Zigzag Lines / Garis Zigzag | trace zigzags | 5 rows |
+| E | Curved Lines / Garis Lengkung | trace hills, valleys, S-curves | 5 rows |
+| F | Wavy Lines / Garis Gelombang | trace waves of 2, 3, 4 cycles | 5 rows |
+| G | Circles & Spirals / Lingkaran & Spiral | go round circles and spirals around the picture | 2x3 panels |
+| H | Mixed Patterns / Pola Campuran | trace steps, scallops, loops, zigzag+wave, square wave | 5 rows |
+| I | Path Tracing / Mengikuti Jalur | follow a road; two forks: pick the road to the partner | 3 wide panels |
+| J | Shape Tracing / Menebalkan Bentuk Dasar | trace circle, square, triangle, rectangle, oval, diamond | 2x3 panels |
 
-Default product = A-E (5 pages). Use `--templates A,B,C,D,E,F,G,H,I` or the `Templates` column for per-row overrides.
+Every line has 5 difficulty styles, easy to hard: big dots, dashes, small dots, a road to stay inside, and free draw.
+Default product = A-J (10 pages). Use `--templates A,B,C` or the `Templates` column for per-row overrides.
+
+**Legacy templates (v1.x)** are still available as `LA`..`LI`: LA Animal Matching, LB Vocabulary, LC Find and Circle,
+LD Cut and Paste, LE Coloring, LF Shadow Matching, LG Counting, LH Horizontal Lines, LI Diagonal Lines.
+Example: `--templates LA,LB,LC,LD,LE` rebuilds the old 5-page product, pixel-identical to v1.x.
 
 ---------------------------------------------------------------------
 ## 2. Database mapping rules
@@ -134,7 +140,7 @@ Use `--strict` to treat warnings as failures for bulk production runs.
 ### Scaling to thousands
 * `--workers 8` parallel rows; hash-based skip means re-running 5,000 rows only rebuilds changed rows (edit text, brand, template version or an image).
 * To restyle everything: change `config.py` (brand/palette) and bump `TEMPLATE_VERSION`.
-* New template: write `draw_g(c, row, pool, rng, accent)` in `templates.py`, add it to `TEMPLATES`.
+* New template: write `draw_k(c, row, pool, rng, accent)` in `templates.py` (use `tracing.py` for lines), add it to `TEMPLATES`.
 
 ---------------------------------------------------------------------
 ## 4. Python structure
@@ -154,7 +160,9 @@ worksheet_system/
 |   |- qc.py           quality checks + report
 |   |- art.py          vector illustration library + PNG loader (color/outline/shadow)
 |   |- components.py   header, instruction, footer, dotted tracing, panels
-|   |- templates.py    templates A-F
+|   |- tracing.py      line/shape engine: geometry (zigzag, wave, spiral...), 5 line styles, markers
+|   |- templates.py    the 10 active templates A-J (+ LA..LI registration)
+|   |- templates_legacy.py  v1.x templates (matching, vocabulary, colouring, counting...)
 |   |- render.py       PDF, preview sheet, cover, thumbnail, change detection
 |   '- main.py         CLI
 '- PRODUCTS/           output (see below)

@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "assets"
 DATA = ROOT / "data"
 
-TEMPLATE_VERSION = "1.0"          # bump to force rebuild of every product
+TEMPLATE_VERSION = "2.0"          # bump to force rebuild of every product
 
 # ---------------------------------------------------------------- brand
 BRAND = {

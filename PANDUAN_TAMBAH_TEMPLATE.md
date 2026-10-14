@@ -3,6 +3,14 @@
 Contoh yang dipakai: **Template G "Berhitung"** (anak menghitung jumlah gambar, lalu melingkari angkanya).
 Kodenya sudah ada di `worksheet_engine/templates.py`. Panduan ini menjelaskan cara membuat yang serupa.
 
+> **Catatan versi 2.0:** template aktif kini A sampai J (pra-menulis) dan ada di `worksheet_engine/templates.py`.
+> Template lama dipindah ke `templates_legacy.py` (kunci `LA`..`LI`). Contoh di bawah (Template G "Berhitung") adalah
+> template lama, yaitu `draw_g` di `templates_legacy.py`; cara membuat template barunya tetap sama.
+> Untuk template berbasis garis atau bentuk, **pakai `tracing.py`**: cukup buat daftar titik `[(x, y), ...]`,
+> lalu panggil `trace_path(c, gaya, titik, accent)` dan `marker_start` / `marker_end`.
+> Contoh paling sederhana ada di `draw_b` (garis datar) dan `draw_f` (gelombang) pada `templates.py`.
+> Jika template baru memakai kunci baru (misalnya `K`), tambahkan ke `TEMPLATES` dan `DEFAULT_SET`.
+
 ## Gambaran: template itu apa?
 
 Template = satu fungsi Python yang menggambar **isi** satu halaman. Header (judul, usia) dan footer

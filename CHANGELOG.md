@@ -3,6 +3,19 @@
 Aturan: setiap perubahan ditulis di sini (terbaru di atas): tanggal, apa yang berubah, dan alasannya.
 Setiap kali tampilan template berubah, naikkan `TEMPLATE_VERSION` di `worksheet_engine/config.py`.
 
+## [2.0] - 2026-10-14
+### Diubah (BESAR)
+- Set template bawaan diganti menjadi 10 template pra-menulis: A Garis Tegak, B Garis Datar, C Garis Miring, D Garis Zigzag, E Garis Lengkung, F Garis Gelombang, G Lingkaran & Spiral, H Pola Campuran, I Mengikuti Jalur, J Menebalkan Bentuk Dasar.
+- Produk bawaan kini 10 halaman (sebelumnya 5). `Preview.png` memakai kisi 5x2.
+- `TEMPLATE_VERSION` dinaikkan ke 2.0 (semua produk akan dibuat ulang).
+### Ditambahkan
+- `tracing.py`: mesin garis/bentuk (geometri, 5 gaya garis, penanda mulai/selesai, panah petunjuk digambar).
+- Setiap template punya lima tingkat kesulitan garis: titik besar, putus-putus, titik kecil, jalur, gambar sendiri.
+### Dipindahkan
+- Template lama (matching, kosakata, lingkari, gunting-tempel, mewarnai, bayangan, berhitung, garis datar/miring lama) dipindah ke `templates_legacy.py`. Tetap bisa dipakai dengan kunci `LA`..`LI`; hasilnya diuji identik dengan versi 1.x.
+### Diubah (tampilan)
+- Warna aksen kuning (susah dibaca sebagai teks) tidak lagi dipakai sebagai aksen template.
+
 ## [1.3] - 2026-10-13
 ### Ditambahkan
 - Template I (Diagonal Lines / Garis Miring): 4 panel (2x2), garis miring naik dan turun dari objek ke pasangannya (titik besar, putus-putus, jalur, gambar sendiri). Opsional.

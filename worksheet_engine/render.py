@@ -46,7 +46,8 @@ def render_pdf(row, pool, templates, out_pdf):
     total = len(templates)
     for n, key in enumerate(templates, 1):
         t = TEMPLATES[key]
-        rng = random.Random(f"{row.id}-{key}")            # deterministic layout per row/template
+        seed_key = key[1:] if key.startswith("L") else key  # template lama LA..LI memakai kunci acak lamanya (A..I)
+        rng = random.Random(f"{row.id}-{seed_key}")        # deterministic layout per row/template
         header(c, row, t, t["accent"])
         t["fn"](c, row, pool_for(row, pool), rng, t["accent"])
         footer(c, n, total, f"Activity {key}: {t['name_en']} / {t['name_id']}")
@@ -61,8 +62,9 @@ def pdf_to_images(pdf_path, scale):
 
 # ------------------------------------------------------------------ preview contact sheet
 def render_preview(pdf_path, out_png):
-    pages = pdf_to_images(pdf_path, 0.9)
-    cols = 3 if len(pages) > 2 else len(pages)
+    many = len(pdfium.PdfDocument(str(pdf_path))) > 6           # banyak halaman -> kotak lebih kecil
+    pages = pdf_to_images(pdf_path, 0.62 if many else 0.9)
+    cols = 5 if many else (3 if len(pages) > 2 else len(pages))
     rows_n = -(-len(pages) // cols)
     pw, ph = pages[0].size
     gap = 36
