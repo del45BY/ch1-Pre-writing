@@ -36,7 +36,7 @@ Setiap kali tampilan template berubah, naikkan `TEMPLATE_VERSION` di `worksheet_
 - Template G (Counting / Berhitung): hitung 1-5 gambar dan lingkari angkanya (kata angka EN/ID). Opsional, tidak masuk set bawaan.
 - `PANDUAN_TAMBAH_TEMPLATE.md`: panduan menambah template baru.
 ### Diuji
-- Template A-E untuk baris 001 identik piksel-demi-piksel dengan `samples/baseline_chicken_egg_preview.png`.
+- Template A-E untuk baris 001 identik piksel-demi-piksel dengan `samples/baseline_legacy_v1_chicken_egg_preview.png` (sekarang di baseline_legacy_v1).
 
 ## [1.0] - 2026-10-13
 ### Ditambahkan

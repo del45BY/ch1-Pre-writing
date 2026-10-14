@@ -78,7 +78,7 @@ Uji juga baris yang kata-katanya panjang, karena itu paling sering merusak tata 
 
 ### Langkah 5. Uji bahwa template lama tidak berubah
 Buat ulang baris 001 (template A sampai E), lalu bandingkan `Preview.png`-nya dengan
-`samples/baseline_chicken_egg_preview.png`. Hasilnya harus identik.
+`samples/baseline_v2_chicken_egg_preview.png`. Hasilnya harus identik.
 
 ### Langkah 6. Aktifkan
 - Untuk dipakai sebagai tambahan: `--templates A,B,C,D,E,H`, atau isi kolom `Templates` di Excel per baris.
